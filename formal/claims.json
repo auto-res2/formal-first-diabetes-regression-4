@@ -1,0 +1,816 @@
+{
+  "instruction": "Efron らの糖尿病データセットに線形回帰モデルを当てはめ，テストデータに対する MSE が 3400 を下回るかを調べる",
+  "lean_order": [
+    "C03",
+    "C04",
+    "C05",
+    "C06",
+    "C07",
+    "C08",
+    "C09",
+    "C10",
+    "C02",
+    "C01",
+    "R06",
+    "R07",
+    "R08",
+    "R09",
+    "R10",
+    "R11",
+    "R12",
+    "R13",
+    "R14",
+    "R15",
+    "R16",
+    "R17",
+    "R18",
+    "R19",
+    "R20",
+    "R05",
+    "R02",
+    "R03",
+    "R04",
+    "R21",
+    "R22",
+    "R01",
+    "C00"
+  ],
+  "derived_order": [
+    "R08",
+    "R05",
+    "C01",
+    "R01",
+    "C00"
+  ],
+  "claims": [
+    {
+      "id": "C00",
+      "group": "C01 と信頼性条件",
+      "explanation": "出力された MSE は 3400 を下回り（C01），信頼性条件を満たす（R01）。",
+      "definitions": "",
+      "proposition": "abbrev C00 (observedDataset : Dataset) (fetchedSha256 : String) (observedLoad : Load)\n    (observedSplit : Split) (observedTrainIndex observedTestIndex : List ℕ) (observedFit : Fit)\n    (observedFitInputSha256 loadedTrainRowsSha256 : String) (observedPredict : Predict)\n    (observedPredictInputSha256 loadedTestFeaturesSha256 : String) (observedMse : Mse)\n    (observedMseTargetSha256 loadedTestTargetSha256 observedMsePredictionSha256 observedPredictOutputSha256 : String)\n    (observedEnvironment : Environment) (observedRepositoryCommit : String) (outputTestMse : ℚ)\n    (fullRunDeclarationSha256s : List String) (verifiedDeclarationSha256 : String) (fullRunTestMses : List ℚ) : Prop :=\n  C01 outputTestMse ∧\n  R01 observedDataset fetchedSha256 observedLoad observedSplit observedTrainIndex observedTestIndex\n      observedFit observedFitInputSha256 loadedTrainRowsSha256 observedPredict observedPredictInputSha256\n      loadedTestFeaturesSha256 observedMse observedMseTargetSha256 loadedTestTargetSha256 observedMsePredictionSha256\n      observedPredictOutputSha256 observedEnvironment observedRepositoryCommit outputTestMse\n      fullRunDeclarationSha256s verifiedDeclarationSha256 fullRunTestMses",
+      "main": false,
+      "kind": "derived",
+      "verifier": "Lean",
+      "derived": {
+        "theorem": "C00_of_C01_R01",
+        "from": [
+          "C01",
+          "R01"
+        ]
+      }
+    },
+    {
+      "id": "C01",
+      "group": "メインの claim",
+      "explanation": "出力された MSE は 3400 を下回る。\n- 宣言した手順で MSE が値として定まる（C02）ときに，値の比較で判定する",
+      "definitions": "",
+      "proposition": "abbrev C01 (outputTestMse : ℚ) : Prop := outputTestMse < 3400",
+      "main": true,
+      "kind": "derived",
+      "verifier": "Lean",
+      "derived": {
+        "theorem": "C01_of_C02",
+        "refutation": "not_C01_of_C02",
+        "from": [
+          "C02"
+        ],
+        "by_comparison": true
+      }
+    },
+    {
+      "id": "C02",
+      "group": "宣言",
+      "explanation": "宣言した手順で，MSE が値として定まる。\n- データセット（C03），読み込み（C04），分割（C05），当てはめ（C06），予測（C07），MSE（C08），計算環境（C09），リポジトリの版（C10）の宣言が，すべて成り立つ\n- その手順で，MSE が 1 つの有理数として定まる",
+      "definitions": "",
+      "proposition": "abbrev C02 : Prop :=\n  C03 ∧ C04 ∧ C05 ∧ C06 ∧ C07 ∧ C08 ∧ C09 ∧ C10 ∧ ∃ mse : ℚ, mse = specifiedTestMse",
+      "main": false,
+      "kind": "declaration",
+      "verifier": "Lean"
+    },
+    {
+      "id": "C03",
+      "group": "宣言 / データセット",
+      "explanation": "データセット: Efron らの糖尿病データセットを使用する。\n- 配布元の URL から取得する\n- 取得するファイルの SHA-256 を固定する\n- 442 件，説明変数は 10 個（AGE，SEX，BMI，BP，S1〜S6），目的変数は Y",
+      "definitions": "abbrev sampleCount : ℕ := 442\nabbrev featureCount : ℕ := 10\n/-- データセットについて宣言する値。 -/\nstructure Dataset where\n  url : String\n  sha256 : String\n  sampleCount : ℕ\n  featureCount : ℕ\n  featureColumns : List String\n  targetColumn : String\n  deriving DecidableEq\ndef C03.value : Dataset :=\n  { url := \"https://www4.stat.ncsu.edu/~boos/var.select/diabetes.tab.txt\",\n    sha256 := \"4733febee697862c22139cdac87478a300ce0d101593deb07ed6c0f3328a99cd\",\n    sampleCount := sampleCount, featureCount := featureCount,\n    featureColumns := [\"AGE\", \"SEX\", \"BMI\", \"BP\", \"S1\", \"S2\", \"S3\", \"S4\", \"S5\", \"S6\"], targetColumn := \"Y\" }",
+      "proposition": "abbrev C03 : Prop :=\n  C03.value =\n    { url := \"https://www4.stat.ncsu.edu/~boos/var.select/diabetes.tab.txt\",\n      sha256 := \"4733febee697862c22139cdac87478a300ce0d101593deb07ed6c0f3328a99cd\",\n      sampleCount := 442, featureCount := 10,\n      featureColumns := [\"AGE\", \"SEX\", \"BMI\", \"BP\", \"S1\", \"S2\", \"S3\", \"S4\", \"S5\", \"S6\"], targetColumn := \"Y\" }",
+      "main": false,
+      "kind": "declaration",
+      "verifier": "Lean"
+    },
+    {
+      "id": "C04",
+      "group": "宣言 / 読み込み",
+      "explanation": "読み込み: numpy.loadtxt を，skiprows=1（1 行目の列名を読み飛ばす）で使用する。\n- 1〜10 列目を説明変数，11 列目を目的変数とする\n- 読み込んだ値は加工しない",
+      "definitions": "/-- 読み込みについて宣言する値。 -/\nstructure Load where\n  functionName : String\n  arguments : List (String × String)\n  deriving DecidableEq\ndef C04.value : Load := { functionName := \"numpy.loadtxt\", arguments := [(\"skiprows\", \"1\")] }\n/-- NumPy の loadtxt が返す表の，1〜10 列目（説明変数）。 -/\nopaque loadedFeatures (arguments : List (String × String)) : Fin sampleCount → Fin featureCount → ℝ\n/-- NumPy の loadtxt が返す表の，11 列目（目的変数）。 -/\nopaque loadedTarget (arguments : List (String × String)) : Fin sampleCount → ℝ\ndef features : Fin sampleCount → Fin featureCount → ℝ := loadedFeatures C04.value.arguments\ndef target : Fin sampleCount → ℝ := loadedTarget C04.value.arguments",
+      "proposition": "abbrev C04 : Prop :=\n  C04.value = { functionName := \"numpy.loadtxt\", arguments := [(\"skiprows\", \"1\")] } ∧\n  features = loadedFeatures C04.value.arguments ∧ target = loadedTarget C04.value.arguments",
+      "main": false,
+      "kind": "declaration",
+      "verifier": "Lean"
+    },
+    {
+      "id": "C05",
+      "group": "宣言 / 分割",
+      "explanation": "分割: train_test_split を，シード 0（random_state=0），テストデータの割合 20%（test_size=0.2）で使用する。\n- ほかの引数は渡さない\n- テストデータ以外の行を訓練データとする",
+      "definitions": "/-- 分割について宣言する値。 -/\nstructure Split where\n  functionName : String\n  arguments : List (String × String)\n  deriving DecidableEq\ndef C05.value : Split :=\n  { functionName := \"sklearn.model_selection.train_test_split\",\n    arguments := [(\"test_size\", \"0.2\"), (\"random_state\", \"0\")] }\n/-- scikit-learn の train_test_split が返す，テストデータの行。 -/\nopaque trainTestSplit (arguments : List (String × String)) : Finset (Fin sampleCount)\ndef testRows : Finset (Fin sampleCount) := trainTestSplit C05.value.arguments\ndef trainRows : Finset (Fin sampleCount) := testRowsᶜ",
+      "proposition": "abbrev C05 : Prop :=\n  C05.value =\n    { functionName := \"sklearn.model_selection.train_test_split\",\n      arguments := [(\"test_size\", \"0.2\"), (\"random_state\", \"0\")] } ∧\n  testRows = trainTestSplit C05.value.arguments ∧ trainRows = testRowsᶜ",
+      "main": false,
+      "kind": "declaration",
+      "verifier": "Lean"
+    },
+    {
+      "id": "C06",
+      "group": "宣言 / 当てはめ",
+      "explanation": "当てはめ: LinearRegression.fit を使用する。\n- LinearRegression には引数を渡さない（パラメータは既定値）\n- 訓練データの説明変数 10 個すべてと目的変数を，そのまま渡す",
+      "definitions": "/-- 当てはめについて宣言する値。parameters は，当てはめるときの LinearRegression のパラメータ。 -/\nstructure Fit where\n  functionName : String\n  parameters : List (String × String)\n  featureCount : ℕ\n  deriving DecidableEq\ndef C06.value : Fit :=\n  { functionName := \"sklearn.linear_model.LinearRegression.fit\",\n    parameters :=\n      [(\"copy_X\", \"True\"), (\"fit_intercept\", \"True\"), (\"n_jobs\", \"None\"), (\"positive\", \"False\"), (\"tol\", \"1e-06\")],\n    featureCount := featureCount }\nopaque FittedModelType : NonemptyType\n/-- 当てはめたモデル。 -/\ndef FittedModel : Type := FittedModelType.type\ninstance : Nonempty FittedModel := FittedModelType.property\n/-- scikit-learn の LinearRegression.fit が返す，当てはめたモデル。 -/\nnoncomputable opaque fit (parameters : List (String × String)) (rows : Finset (Fin sampleCount))\n    (features : Fin sampleCount → Fin featureCount → ℝ) (target : Fin sampleCount → ℝ) : FittedModel\nnoncomputable def fittedModel : FittedModel := fit C06.value.parameters trainRows features target",
+      "proposition": "abbrev C06 : Prop :=\n  C06.value =\n    { functionName := \"sklearn.linear_model.LinearRegression.fit\",\n      parameters :=\n        [(\"copy_X\", \"True\"), (\"fit_intercept\", \"True\"), (\"n_jobs\", \"None\"), (\"positive\", \"False\"), (\"tol\", \"1e-06\")],\n      featureCount := 10 } ∧\n  fittedModel = fit C06.value.parameters trainRows features target",
+      "main": false,
+      "kind": "declaration",
+      "verifier": "Lean"
+    },
+    {
+      "id": "C07",
+      "group": "宣言 / 予測",
+      "explanation": "予測: LinearRegression.predict を使用する。\n- 当てはめたモデルに，説明変数をそのまま渡す",
+      "definitions": "/-- 予測について宣言する値。 -/\nstructure Predict where\n  functionName : String\n  deriving DecidableEq\ndef C07.value : Predict := { functionName := \"sklearn.linear_model.LinearRegression.predict\" }\n/-- scikit-learn の LinearRegression.predict が返す予測値。 -/\nopaque predict (model : FittedModel) (x : Fin featureCount → ℝ) : ℝ\nnoncomputable def prediction (i : Fin sampleCount) : ℝ := predict fittedModel (features i)",
+      "proposition": "abbrev C07 : Prop :=\n  C07.value = { functionName := \"sklearn.linear_model.LinearRegression.predict\" } ∧\n  prediction = fun i => predict fittedModel (features i)",
+      "main": false,
+      "kind": "declaration",
+      "verifier": "Lean"
+    },
+    {
+      "id": "C08",
+      "group": "宣言 / MSE",
+      "explanation": "MSE: mean_squared_error を使用する。\n- テストデータの目的変数と予測値を，そのまま渡す。ほかの引数は渡さない",
+      "definitions": "/-- MSE について宣言する値。 -/\nstructure Mse where\n  functionName : String\n  deriving DecidableEq\ndef C08.value : Mse := { functionName := \"sklearn.metrics.mean_squared_error\" }\n/-- scikit-learn の mean_squared_error が返す値。 -/\nopaque meanSquaredError (rows : Finset (Fin sampleCount)) (target prediction : Fin sampleCount → ℝ) : ℚ\n/-- 宣言したとおりに計算した，テストデータに対する MSE。 -/\nnoncomputable def specifiedTestMse : ℚ := meanSquaredError testRows target prediction",
+      "proposition": "abbrev C08 : Prop :=\n  C08.value = { functionName := \"sklearn.metrics.mean_squared_error\" } ∧\n  specifiedTestMse = meanSquaredError testRows target prediction",
+      "main": false,
+      "kind": "declaration",
+      "verifier": "Lean"
+    },
+    {
+      "id": "C09",
+      "group": "宣言 / 計算環境",
+      "explanation": "計算環境: ubuntu-24.04，x86_64，4 コア，メモリ 16 GiB を使用する。\n- GitHub Actions の標準の runner\n- メモリは，GiB の端数を切り上げて比べる",
+      "definitions": "/-- 計算環境について宣言する値。 -/\nstructure Environment where\n  operatingSystem : String\n  cpuArchitecture : String\n  cpuCount : ℕ\n  memoryGibibytes : ℕ\n  deriving DecidableEq\ndef C09.value : Environment :=\n  { operatingSystem := \"ubuntu-24.04\", cpuArchitecture := \"x86_64\", cpuCount := 4, memoryGibibytes := 16 }",
+      "proposition": "abbrev C09 : Prop :=\n  C09.value = { operatingSystem := \"ubuntu-24.04\", cpuArchitecture := \"x86_64\", cpuCount := 4, memoryGibibytes := 16 }",
+      "main": false,
+      "kind": "declaration",
+      "verifier": "Lean"
+    },
+    {
+      "id": "C10",
+      "group": "宣言 / リポジトリの版",
+      "explanation": "リポジトリの版: このリポジトリの commit 156ce2c43a6ced9830f25e769e0d382184dbf674 を使用する。\n- 実行に関するもの（実験コード，ライブラリの版を固定するファイル，Python の版を含む実行のコマンド）は，すべてこの commit にある",
+      "definitions": "def C10.value : String := \"156ce2c43a6ced9830f25e769e0d382184dbf674\"",
+      "proposition": "abbrev C10 : Prop := C10.value = \"156ce2c43a6ced9830f25e769e0d382184dbf674\"",
+      "main": false,
+      "kind": "declaration",
+      "verifier": "Lean"
+    },
+    {
+      "id": "R01",
+      "group": "信頼性条件",
+      "explanation": "信頼性条件を満たす。\n- 公理（R02，R03，R04）\n- すべての宣言について，宣言した値は観測した値と一致し，その宣言のほかの検証も成り立つ（R05）\n- HARKing をしていない（R21）\n- チェリーピッキングをしていない（R22）",
+      "definitions": "",
+      "proposition": "abbrev R01 (observedDataset : Dataset) (fetchedSha256 : String) (observedLoad : Load)\n    (observedSplit : Split) (observedTrainIndex observedTestIndex : List ℕ) (observedFit : Fit)\n    (observedFitInputSha256 loadedTrainRowsSha256 : String) (observedPredict : Predict)\n    (observedPredictInputSha256 loadedTestFeaturesSha256 : String) (observedMse : Mse)\n    (observedMseTargetSha256 loadedTestTargetSha256 observedMsePredictionSha256 observedPredictOutputSha256 : String)\n    (observedEnvironment : Environment) (observedRepositoryCommit : String) (outputTestMse : ℚ)\n    (fullRunDeclarationSha256s : List String) (verifiedDeclarationSha256 : String) (fullRunTestMses : List ℚ) : Prop :=\n  R02 fetchedSha256 ∧ R03 ∧ R04 ∧\n  R05 observedDataset fetchedSha256 observedLoad observedSplit observedTrainIndex observedTestIndex\n      observedFit observedFitInputSha256 loadedTrainRowsSha256 observedPredict observedPredictInputSha256\n      loadedTestFeaturesSha256 observedMse observedMseTargetSha256 loadedTestTargetSha256 observedMsePredictionSha256\n      observedPredictOutputSha256 observedEnvironment observedRepositoryCommit ∧\n  R21 fullRunDeclarationSha256s verifiedDeclarationSha256 ∧ R22 fullRunTestMses outputTestMse",
+      "main": false,
+      "kind": "derived",
+      "verifier": "Lean",
+      "derived": {
+        "theorem": "R01_of_R02_R03_R04_R05_R21_R22",
+        "from": [
+          "R02",
+          "R03",
+          "R04",
+          "R05",
+          "R21",
+          "R22"
+        ]
+      }
+    },
+    {
+      "id": "R02",
+      "group": "信頼性条件 / 公理",
+      "explanation": "Efron らが用いた糖尿病データセットは，配布元の URL から取得したファイルである。\n- 値が入った後に，その値に対して公理として宣言する",
+      "definitions": "",
+      "proposition": "abbrev R02 (fetchedSha256 : String) : Prop := efronDatasetSha256 = fetchedSha256",
+      "main": false,
+      "kind": "axiom",
+      "verifier": null,
+      "unverifiable": "文献が示すファイルを特定する検証器が無い"
+    },
+    {
+      "id": "R03",
+      "group": "信頼性条件 / 公理",
+      "explanation": "実験コードは，仕様を満たす。\n- 使ったものを，そのまま出力に記録する\n- 計算した MSE を，そのまま出力に記録する\n- 宣言（C04〜C08）のとおりに，データを関数へ渡す",
+      "definitions": "/-- 実験コードは，仕様を満たす（中身の無い記号）。 -/\nopaque CodeMeetsSpecification : Prop",
+      "proposition": "abbrev R03 : Prop := CodeMeetsSpecification",
+      "main": false,
+      "kind": "axiom",
+      "verifier": null,
+      "unverifiable": "コードの振る舞いを判定する検証器が無い"
+    },
+    {
+      "id": "R04",
+      "group": "信頼性条件 / 公理",
+      "explanation": "ライブラリは信用できる。\n- 宣言したデータセット，関数，引数，計算環境を使い，宣言のとおりにデータを渡せば，ライブラリが計算する MSE は，宣言したとおりに計算した MSE である\n- 関数の中身（何を計算するか）は主張しない\n- ライブラリの版は，リポジトリの版（C10）が決める",
+      "definitions": "/-- ライブラリは信用できる（中身の無い記号）。 -/\nopaque LibrariesAreTrustworthy : Prop",
+      "proposition": "abbrev R04 : Prop := LibrariesAreTrustworthy",
+      "main": false,
+      "kind": "axiom",
+      "verifier": null,
+      "unverifiable": "ライブラリの中身を判定する検証器が無い"
+    },
+    {
+      "id": "R05",
+      "group": "信頼性条件 / 宣言と観測の一致",
+      "explanation": "すべての宣言（C03〜C10）について，宣言した値は GitHub の検証器が観測した値と一致し，その宣言のほかの検証も成り立つ（R06〜R20）。",
+      "definitions": "/-- 宣言の一覧。 -/\ninductive Declaration\n  | dataset | load | split | fit | predict | mse | environment | repositoryCommit\n/-- 宣言ごとの検証。各行の先頭が「宣言した値 = GitHub の検証器が観測した値」，その後ろが，その宣言のほかの検証。 -/\nabbrev ObservedAsDeclared (observedDataset : Dataset) (fetchedSha256 : String) (observedLoad : Load)\n    (observedSplit : Split) (observedTrainIndex observedTestIndex : List ℕ) (observedFit : Fit)\n    (observedFitInputSha256 loadedTrainRowsSha256 : String) (observedPredict : Predict)\n    (observedPredictInputSha256 loadedTestFeaturesSha256 : String) (observedMse : Mse)\n    (observedMseTargetSha256 loadedTestTargetSha256 observedMsePredictionSha256 observedPredictOutputSha256 : String)\n    (observedEnvironment : Environment) (observedRepositoryCommit : String) : Declaration → Prop\n  | .dataset => R06 C03.value observedDataset ∧ R07 C03.value fetchedSha256 ∧ R08 observedDataset\n  | .load => R09 C04.value observedLoad\n  | .split => R10 C05.value observedSplit ∧ R11 C03.value observedTrainIndex observedTestIndex\n  | .fit => R12 C06.value observedFit ∧ R13 observedFitInputSha256 loadedTrainRowsSha256\n  | .predict => R14 C07.value observedPredict ∧ R15 observedPredictInputSha256 loadedTestFeaturesSha256\n  | .mse =>\n      R16 C08.value observedMse ∧ R17 observedMseTargetSha256 loadedTestTargetSha256 ∧\n      R18 observedMsePredictionSha256 observedPredictOutputSha256\n  | .environment => R19 C09.value observedEnvironment\n  | .repositoryCommit => R20 C10.value observedRepositoryCommit",
+      "proposition": "abbrev R05 (observedDataset : Dataset) (fetchedSha256 : String) (observedLoad : Load)\n    (observedSplit : Split) (observedTrainIndex observedTestIndex : List ℕ) (observedFit : Fit)\n    (observedFitInputSha256 loadedTrainRowsSha256 : String) (observedPredict : Predict)\n    (observedPredictInputSha256 loadedTestFeaturesSha256 : String) (observedMse : Mse)\n    (observedMseTargetSha256 loadedTestTargetSha256 observedMsePredictionSha256 observedPredictOutputSha256 : String)\n    (observedEnvironment : Environment) (observedRepositoryCommit : String) : Prop :=\n  ∀ declaration : Declaration,\n    ObservedAsDeclared observedDataset fetchedSha256 observedLoad observedSplit observedTrainIndex observedTestIndex\n      observedFit observedFitInputSha256 loadedTrainRowsSha256 observedPredict observedPredictInputSha256\n      loadedTestFeaturesSha256 observedMse observedMseTargetSha256 loadedTestTargetSha256 observedMsePredictionSha256\n      observedPredictOutputSha256 observedEnvironment observedRepositoryCommit declaration",
+      "main": false,
+      "kind": "derived",
+      "verifier": "Lean",
+      "derived": {
+        "theorem": "R05_of_R06_to_R20",
+        "from": [
+          "R06",
+          "R07",
+          "R08",
+          "R09",
+          "R10",
+          "R11",
+          "R12",
+          "R13",
+          "R14",
+          "R15",
+          "R16",
+          "R17",
+          "R18",
+          "R19",
+          "R20"
+        ],
+        "paths": {
+          "R06": "(h .dataset).1",
+          "R07": "(h .dataset).2.1",
+          "R08": "(h .dataset).2.2",
+          "R09": "(h .load)",
+          "R10": "(h .split).1",
+          "R11": "(h .split).2",
+          "R12": "(h .fit).1",
+          "R13": "(h .fit).2",
+          "R14": "(h .predict).1",
+          "R15": "(h .predict).2",
+          "R16": "(h .mse).1",
+          "R17": "(h .mse).2.1",
+          "R18": "(h .mse).2.2",
+          "R19": "(h .environment)",
+          "R20": "(h .repositoryCommit)"
+        }
+      }
+    },
+    {
+      "id": "R06",
+      "group": "信頼性条件 / 宣言と観測の一致 / データセット",
+      "explanation": "宣言したデータセットは，観測したデータセットと一致する。",
+      "definitions": "",
+      "proposition": "abbrev R06 (declaredDataset observedDataset : Dataset) : Prop := declaredDataset = observedDataset",
+      "main": false,
+      "kind": "",
+      "verifier": "GitHub",
+      "declared": {
+        "declaredDataset": "C03.value"
+      }
+    },
+    {
+      "id": "R07",
+      "group": "信頼性条件 / 宣言と観測の一致 / データセット",
+      "explanation": "宣言した URL から取得したファイルの SHA-256 は，宣言した SHA-256 と一致する。",
+      "definitions": "",
+      "proposition": "abbrev R07 (declaredDataset : Dataset) (fetchedSha256 : String) : Prop := declaredDataset.sha256 = fetchedSha256",
+      "main": false,
+      "kind": "",
+      "verifier": "GitHub",
+      "declared": {
+        "declaredDataset": "C03.value"
+      }
+    },
+    {
+      "id": "R08",
+      "group": "信頼性条件 / 宣言と観測の一致 / データセット",
+      "explanation": "実行が読んだファイルは，Efron らが用いた糖尿病データセットである。",
+      "definitions": "/-- Efron らが用いた糖尿病データセットのファイルの SHA-256（中身の無い記号）。 -/\nopaque efronDatasetSha256 : String",
+      "proposition": "abbrev R08 (observedDataset : Dataset) : Prop := observedDataset.sha256 = efronDatasetSha256",
+      "main": false,
+      "kind": "derived",
+      "verifier": "Lean",
+      "derived": {
+        "theorem": "R08_of_R02_R06_R07",
+        "from": [
+          "R02",
+          "R06",
+          "R07"
+        ]
+      }
+    },
+    {
+      "id": "R09",
+      "group": "信頼性条件 / 宣言と観測の一致 / 読み込み",
+      "explanation": "宣言した読み込みは，観測した読み込みと一致する。",
+      "definitions": "",
+      "proposition": "abbrev R09 (declaredLoad observedLoad : Load) : Prop := declaredLoad = observedLoad",
+      "main": false,
+      "kind": "",
+      "verifier": "GitHub",
+      "declared": {
+        "declaredLoad": "C04.value"
+      }
+    },
+    {
+      "id": "R10",
+      "group": "信頼性条件 / 宣言と観測の一致 / 分割",
+      "explanation": "宣言した分割は，観測した分割と一致する。",
+      "definitions": "",
+      "proposition": "abbrev R10 (declaredSplit observedSplit : Split) : Prop := declaredSplit = observedSplit",
+      "main": false,
+      "kind": "",
+      "verifier": "GitHub",
+      "declared": {
+        "declaredSplit": "C05.value"
+      }
+    },
+    {
+      "id": "R11",
+      "group": "信頼性条件 / 宣言と観測の一致 / 分割",
+      "explanation": "実行が使った訓練データの行とテストデータの行は，重ならず，合わせると宣言した全件になる。",
+      "definitions": "",
+      "proposition": "abbrev R11 (declaredDataset : Dataset) (observedTrainIndex observedTestIndex : List ℕ) : Prop :=\n  Disjoint observedTrainIndex.toFinset observedTestIndex.toFinset ∧\n  observedTrainIndex.toFinset ∪ observedTestIndex.toFinset = Finset.range declaredDataset.sampleCount",
+      "main": false,
+      "kind": "",
+      "verifier": "GitHub",
+      "declared": {
+        "declaredDataset": "C03.value"
+      }
+    },
+    {
+      "id": "R12",
+      "group": "信頼性条件 / 宣言と観測の一致 / 当てはめ",
+      "explanation": "宣言した当てはめは，観測した当てはめと一致する。",
+      "definitions": "",
+      "proposition": "abbrev R12 (declaredFit observedFit : Fit) : Prop := declaredFit = observedFit",
+      "main": false,
+      "kind": "",
+      "verifier": "GitHub",
+      "declared": {
+        "declaredFit": "C06.value"
+      }
+    },
+    {
+      "id": "R13",
+      "group": "信頼性条件 / 宣言と観測の一致 / 当てはめ",
+      "explanation": "実行が当てはめに渡した説明変数と目的変数は，読み込んだファイルの訓練データの行そのものである（加工していない）。",
+      "definitions": "",
+      "proposition": "abbrev R13 (observedFitInputSha256 loadedTrainRowsSha256 : String) : Prop :=\n  observedFitInputSha256 = loadedTrainRowsSha256",
+      "main": false,
+      "kind": "",
+      "verifier": "GitHub"
+    },
+    {
+      "id": "R14",
+      "group": "信頼性条件 / 宣言と観測の一致 / 予測",
+      "explanation": "宣言した予測は，観測した予測と一致する。",
+      "definitions": "",
+      "proposition": "abbrev R14 (declaredPredict observedPredict : Predict) : Prop := declaredPredict = observedPredict",
+      "main": false,
+      "kind": "",
+      "verifier": "GitHub",
+      "declared": {
+        "declaredPredict": "C07.value"
+      }
+    },
+    {
+      "id": "R15",
+      "group": "信頼性条件 / 宣言と観測の一致 / 予測",
+      "explanation": "実行が予測に渡した説明変数は，読み込んだファイルのテストデータの行そのものである（加工していない）。",
+      "definitions": "",
+      "proposition": "abbrev R15 (observedPredictInputSha256 loadedTestFeaturesSha256 : String) : Prop :=\n  observedPredictInputSha256 = loadedTestFeaturesSha256",
+      "main": false,
+      "kind": "",
+      "verifier": "GitHub"
+    },
+    {
+      "id": "R16",
+      "group": "信頼性条件 / 宣言と観測の一致 / MSE",
+      "explanation": "宣言した MSE の計算は，観測した MSE の計算と一致する。",
+      "definitions": "",
+      "proposition": "abbrev R16 (declaredMse observedMse : Mse) : Prop := declaredMse = observedMse",
+      "main": false,
+      "kind": "",
+      "verifier": "GitHub",
+      "declared": {
+        "declaredMse": "C08.value"
+      }
+    },
+    {
+      "id": "R17",
+      "group": "信頼性条件 / 宣言と観測の一致 / MSE",
+      "explanation": "実行が MSE の計算に渡した目的変数は，読み込んだファイルのテストデータの行そのものである（加工していない）。",
+      "definitions": "",
+      "proposition": "abbrev R17 (observedMseTargetSha256 loadedTestTargetSha256 : String) : Prop :=\n  observedMseTargetSha256 = loadedTestTargetSha256",
+      "main": false,
+      "kind": "",
+      "verifier": "GitHub"
+    },
+    {
+      "id": "R18",
+      "group": "信頼性条件 / 宣言と観測の一致 / MSE",
+      "explanation": "実行が MSE の計算に渡した予測値は，予測の関数が返した値そのものである（加工していない）。",
+      "definitions": "",
+      "proposition": "abbrev R18 (observedMsePredictionSha256 observedPredictOutputSha256 : String) : Prop :=\n  observedMsePredictionSha256 = observedPredictOutputSha256",
+      "main": false,
+      "kind": "",
+      "verifier": "GitHub"
+    },
+    {
+      "id": "R19",
+      "group": "信頼性条件 / 宣言と観測の一致 / 計算環境",
+      "explanation": "宣言した計算環境は，観測した計算環境と一致する。",
+      "definitions": "",
+      "proposition": "abbrev R19 (declaredEnvironment observedEnvironment : Environment) : Prop := declaredEnvironment = observedEnvironment",
+      "main": false,
+      "kind": "",
+      "verifier": "GitHub",
+      "declared": {
+        "declaredEnvironment": "C09.value"
+      }
+    },
+    {
+      "id": "R20",
+      "group": "信頼性条件 / 宣言と観測の一致 / リポジトリの版",
+      "explanation": "宣言した commit は，実行が取り出したリポジトリの commit と一致する。",
+      "definitions": "",
+      "proposition": "abbrev R20 (declaredRepositoryCommit observedRepositoryCommit : String) : Prop :=\n  declaredRepositoryCommit = observedRepositoryCommit",
+      "main": false,
+      "kind": "",
+      "verifier": "GitHub",
+      "declared": {
+        "declaredRepositoryCommit": "C10.value"
+      }
+    },
+    {
+      "id": "R21",
+      "group": "信頼性条件 / HARKing をしていない",
+      "explanation": "本番の run は，失敗したものも含めてすべて，判定に使う宣言と同じ宣言の commit から起動された。\n- 宣言は，claims.json から，検証の結果と説明の文を除いたもの\n- 最初の本番の run より前に宣言があり，その後に宣言を書き換えていないことを示す",
+      "definitions": "",
+      "proposition": "abbrev R21 (fullRunDeclarationSha256s : List String) (verifiedDeclarationSha256 : String) : Prop :=\n  ∀ sha256 ∈ fullRunDeclarationSha256s, sha256 = verifiedDeclarationSha256",
+      "main": false,
+      "kind": "",
+      "verifier": "GitHub"
+    },
+    {
+      "id": "R22",
+      "group": "信頼性条件 / チェリーピッキングをしていない",
+      "explanation": "成功した本番の run が出力した MSE は，すべて，判定に使う MSE と一致する。",
+      "definitions": "",
+      "proposition": "abbrev R22 (fullRunTestMses : List ℚ) (outputTestMse : ℚ) : Prop := ∀ mse ∈ fullRunTestMses, mse = outputTestMse",
+      "main": false,
+      "kind": "",
+      "verifier": "GitHub"
+    }
+  ],
+  "variables": {
+    "outputTestMse": {
+      "type": "ℚ",
+      "meaning": "出力された，テストデータに対する MSE",
+      "verifier": "GitHub",
+      "query": "experiment_output",
+      "args": {
+        "key": "testMse"
+      }
+    },
+    "observedDataset": {
+      "type": "Dataset",
+      "meaning": "観測したデータセット（取得の記録にある URL，実行が読んだファイルの SHA-256，実行が読んだ件数と列）",
+      "verifier": "GitHub",
+      "fields": {
+        "url": {
+          "query": "artifact_json_only_key",
+          "args": {
+            "path": "fetched_urls.json"
+          }
+        },
+        "sha256": {
+          "query": "artifact_file_sha256",
+          "args": {
+            "path": "outputs/data/diabetes.tab.txt"
+          }
+        },
+        "sampleCount": {
+          "query": "experiment_output",
+          "args": {
+            "key": "sampleCount"
+          }
+        },
+        "featureCount": {
+          "query": "experiment_output",
+          "args": {
+            "key": "featureCount"
+          }
+        },
+        "featureColumns": {
+          "query": "experiment_output",
+          "args": {
+            "key": "featureColumns"
+          }
+        },
+        "targetColumn": {
+          "query": "experiment_output",
+          "args": {
+            "key": "targetColumn"
+          }
+        }
+      }
+    },
+    "fetchedSha256": {
+      "type": "String",
+      "meaning": "取得の記録にある URL から取得したファイルの SHA-256",
+      "verifier": "GitHub",
+      "query": "artifact_json_only_value",
+      "args": {
+        "path": "fetched_urls.json"
+      }
+    },
+    "observedLoad": {
+      "type": "Load",
+      "meaning": "観測した読み込み（実行が呼んだ関数と，渡した引数）",
+      "verifier": "GitHub",
+      "fields": {
+        "functionName": {
+          "query": "experiment_output",
+          "args": {
+            "key": "loadFunction"
+          }
+        },
+        "arguments": {
+          "query": "experiment_output",
+          "args": {
+            "key": "loadArguments"
+          }
+        }
+      }
+    },
+    "observedSplit": {
+      "type": "Split",
+      "meaning": "観測した分割（実行が呼んだ関数と，渡した引数）",
+      "verifier": "GitHub",
+      "fields": {
+        "functionName": {
+          "query": "experiment_output",
+          "args": {
+            "key": "splitFunction"
+          }
+        },
+        "arguments": {
+          "query": "experiment_output",
+          "args": {
+            "key": "splitArguments"
+          }
+        }
+      }
+    },
+    "observedTrainIndex": {
+      "type": "List ℕ",
+      "meaning": "実行が使った訓練データの行の番号",
+      "verifier": "GitHub",
+      "query": "experiment_output",
+      "args": {
+        "key": "trainIndex"
+      }
+    },
+    "observedTestIndex": {
+      "type": "List ℕ",
+      "meaning": "実行が使ったテストデータの行の番号",
+      "verifier": "GitHub",
+      "query": "experiment_output",
+      "args": {
+        "key": "testIndex"
+      }
+    },
+    "observedFit": {
+      "type": "Fit",
+      "meaning": "観測した当てはめ（実行が呼んだ関数，当てはめたときの LinearRegression のパラメータ，当てはめに使った説明変数の数）",
+      "verifier": "GitHub",
+      "fields": {
+        "functionName": {
+          "query": "experiment_output",
+          "args": {
+            "key": "fitFunction"
+          }
+        },
+        "parameters": {
+          "query": "experiment_output",
+          "args": {
+            "key": "fitParameters"
+          }
+        },
+        "featureCount": {
+          "query": "experiment_output",
+          "args": {
+            "key": "fitFeatureCount"
+          }
+        }
+      }
+    },
+    "observedFitInputSha256": {
+      "type": "String",
+      "meaning": "実行が当てはめに渡した説明変数と目的変数の SHA-256",
+      "verifier": "GitHub",
+      "query": "experiment_output",
+      "args": {
+        "key": "fitInputSha256"
+      }
+    },
+    "loadedTrainRowsSha256": {
+      "type": "String",
+      "meaning": "実行が読んだファイルの，訓練データの行の説明変数と目的変数の SHA-256",
+      "verifier": "GitHub",
+      "query": "artifact_rows_sha256",
+      "args": {
+        "path": "outputs/data/diabetes.tab.txt",
+        "index": "trainIndex",
+        "columns": [
+          "features",
+          "target"
+        ]
+      }
+    },
+    "observedPredict": {
+      "type": "Predict",
+      "meaning": "観測した予測（実行が呼んだ関数）",
+      "verifier": "GitHub",
+      "fields": {
+        "functionName": {
+          "query": "experiment_output",
+          "args": {
+            "key": "predictFunction"
+          }
+        }
+      }
+    },
+    "observedPredictInputSha256": {
+      "type": "String",
+      "meaning": "実行が予測に渡した説明変数の SHA-256",
+      "verifier": "GitHub",
+      "query": "experiment_output",
+      "args": {
+        "key": "predictInputSha256"
+      }
+    },
+    "loadedTestFeaturesSha256": {
+      "type": "String",
+      "meaning": "実行が読んだファイルの，テストデータの行の説明変数の SHA-256",
+      "verifier": "GitHub",
+      "query": "artifact_rows_sha256",
+      "args": {
+        "path": "outputs/data/diabetes.tab.txt",
+        "index": "testIndex",
+        "columns": [
+          "features"
+        ]
+      }
+    },
+    "observedMse": {
+      "type": "Mse",
+      "meaning": "観測した MSE の計算（実行が呼んだ関数）",
+      "verifier": "GitHub",
+      "fields": {
+        "functionName": {
+          "query": "experiment_output",
+          "args": {
+            "key": "mseFunction"
+          }
+        }
+      }
+    },
+    "observedMseTargetSha256": {
+      "type": "String",
+      "meaning": "実行が MSE の計算に渡した目的変数の SHA-256",
+      "verifier": "GitHub",
+      "query": "experiment_output",
+      "args": {
+        "key": "mseTargetSha256"
+      }
+    },
+    "loadedTestTargetSha256": {
+      "type": "String",
+      "meaning": "実行が読んだファイルの，テストデータの行の目的変数の SHA-256",
+      "verifier": "GitHub",
+      "query": "artifact_rows_sha256",
+      "args": {
+        "path": "outputs/data/diabetes.tab.txt",
+        "index": "testIndex",
+        "columns": [
+          "target"
+        ]
+      }
+    },
+    "observedMsePredictionSha256": {
+      "type": "String",
+      "meaning": "実行が MSE の計算に渡した予測値の SHA-256",
+      "verifier": "GitHub",
+      "query": "experiment_output",
+      "args": {
+        "key": "msePredictionSha256"
+      }
+    },
+    "observedPredictOutputSha256": {
+      "type": "String",
+      "meaning": "予測の関数が返した値の SHA-256",
+      "verifier": "GitHub",
+      "query": "experiment_output",
+      "args": {
+        "key": "predictOutputSha256"
+      }
+    },
+    "observedEnvironment": {
+      "type": "Environment",
+      "meaning": "観測した計算環境（GitHub Actions の runner の種類，CPU のアーキテクチャ，コア数，メモリ）",
+      "verifier": "GitHub",
+      "fields": {
+        "operatingSystem": {
+          "query": "runner_label"
+        },
+        "cpuArchitecture": {
+          "query": "experiment_output",
+          "args": {
+            "key": "cpuArchitecture"
+          }
+        },
+        "cpuCount": {
+          "query": "experiment_output",
+          "args": {
+            "key": "cpuCount"
+          }
+        },
+        "memoryGibibytes": {
+          "query": "experiment_output",
+          "args": {
+            "key": "memoryGibibytes"
+          }
+        }
+      }
+    },
+    "observedRepositoryCommit": {
+      "type": "String",
+      "meaning": "実行が取り出したリポジトリの commit",
+      "verifier": "GitHub",
+      "query": "artifact_json",
+      "args": {
+        "path": "repository_commit.json",
+        "key": "commit"
+      }
+    },
+    "fullRunDeclarationSha256s": {
+      "type": "List String",
+      "meaning": "run（失敗したものも含む）を起動した commit ごとの，宣言（claims.json から検証の結果と説明の文を除いたもの）の SHA-256",
+      "verifier": "GitHub",
+      "query": "all_runs_json_sha256",
+      "args": {
+        "path": "formal/claims.json",
+        "drop_keys": [
+          "result",
+          "verified",
+          "explanation"
+        ]
+      }
+    },
+    "verifiedDeclarationSha256": {
+      "type": "String",
+      "meaning": "判定に使う宣言（claims.json から検証の結果と説明の文を除いたもの）の SHA-256",
+      "verifier": "GitHub",
+      "query": "local_json_sha256",
+      "args": {
+        "path": "formal/claims.json",
+        "drop_keys": [
+          "result",
+          "verified",
+          "explanation"
+        ]
+      }
+    },
+    "fullRunTestMses": {
+      "type": "List ℚ",
+      "meaning": "成功した run すべての，出力された MSE",
+      "verifier": "GitHub",
+      "query": "succeeded_runs_experiment_output",
+      "args": {
+        "key": "testMse"
+      }
+    }
+  },
+  "axioms": [
+    "propext",
+    "Classical.choice",
+    "Quot.sound"
+  ]
+}
