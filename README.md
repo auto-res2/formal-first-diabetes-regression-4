@@ -24,6 +24,16 @@ C00: C01 が成り立ち、信頼性条件（R01）を満たす
 - 証明に必要なもの: [`formal/lean/Proofs.lean`](formal/lean/Proofs.lean)（claims の形式化とは別に置く）
 - 実験コード: [`src/run_experiment.py`](src/run_experiment.py)
 
+## 結果
+
+本番は 1 回だけ実行した（[実験の run](https://github.com/auto-res2/formal-first-diabetes-regression-4/actions/runs/45454383148)、[検証の run](https://github.com/auto-res2/formal-first-diabetes-regression-4/actions/runs/45454456501)）。
+
+- テストデータに対する MSE は 3424.26。C01（出力された MSE < 3400）は偽
+- R01（信頼性条件）は真。公理 R02〜R04 に依存する。R05（すべての宣言について、宣言した値は観測した値と一致する）、R21、R22 も真
+- C00 は偽（C01 が偽のため）
+- 検証された値は [`formal/lean/Values.lean`](formal/lean/Values.lean)、各 claim の判定の定理は [`formal/lean/Theorems.lean`](formal/lean/Theorems.lean)。どちらも検証の run が生成したもの
+- 論文: [`report/report.pdf`](report/report.pdf)（各文に、元になった claims の ID を付けた）
+
 ## 流れ
 
 1. 実行に関するもの（実験コード、依存の固定、実行のコマンド）を commit する
