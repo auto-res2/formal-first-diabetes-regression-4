@@ -1,0 +1,12 @@
+data/
+.venv/
+__pycache__/
+report/*.aux
+report/*.log
+report/*.out
+run-output/
+formal/lean/.lake/
+formal/lean/Candidates.lean
+execution/
+# claims.json から生成する
+formal/lean/Spec.lean
