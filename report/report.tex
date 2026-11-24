@@ -1,0 +1,88 @@
+\documentclass[9pt,a4paper,twocolumn]{ltjsarticle}
+\usepackage[top=20mm,bottom=22mm,left=17mm,right=17mm,columnsep=8mm]{geometry}
+\usepackage{amsmath}
+\usepackage[hidelinks]{hyperref}
+\input{values.tex}
+% 各文の元になった claims の ID。スキーマ（claims.json、検証の結果を含む commit）の、その claim の行へリンクする
+\newcommand{\schemaurl}{https://github.com/auto-res2/formal-first-diabetes-regression-4/blob/\SchemaCommit/formal/claims.json}
+\newcommand{\cid}[1]{\textsuperscript{\textsf{\scriptsize[\href{\schemaurl\#L\csname line#1\endcsname}{#1}]}}}
+% 検証された値。スキーマの、その値の行へリンクする
+\newcommand{\val}[1]{\textsuperscript{\textsf{\scriptsize[\href{\schemaurl\#L\csname line#1\endcsname}{値}]}}}
+\newcommand{\code}[1]{\texttt{\small #1}}
+\begin{document}
+
+\twocolumn[{
+\begin{center}
+{\Large\bfseries 糖尿病データセットに対する線形回帰のテスト MSE と\\しきい値 3400 の比較}\\[2mm]
+{\normalsize auto-res2}
+\end{center}
+\vspace{3mm}
+}]
+
+\section{主張}
+
+実験の前に，次の主張を宣言した．\cid{C01}Efron らの糖尿病データセットに線形回帰モデルを当てはめる実験が出力する，テストデータに対する MSE は，3400 を下回る．
+\cid{C00}あわせて，この主張が成り立ち，かつ，信頼性条件（\ref{sec:reliability} 節）を満たすことを主張した．
+検証の結果，出力された MSE は 3400 を下回らず，信頼性条件は満たされた（\ref{sec:result} 節）．
+
+\section{実験設定}
+
+\cid{C02}MSE は，次の宣言の手順で，1 つの値に定まる．宣言は，実験の前に置いた．
+
+\paragraph{データセット}
+\cid{C03}Efron ら~\cite{efron} の糖尿病データセットを，配布元の URL\footnote{\url{https://www4.stat.ncsu.edu/~boos/var.select/diabetes.tab.txt}}から取得して使用する．取得するファイルの SHA-256 を固定した．データは \NSamples{} 件で，説明変数は \NFeatures{} 個（AGE，SEX，BMI，BP，S1〜S6），目的変数は Y である．
+
+\paragraph{読み込みと分割}
+\cid{C04}ファイルは \code{numpy.loadtxt} で読み込み（1 行目の列名は読み飛ばす），1〜10 列目を説明変数，11 列目を目的変数とする．読み込んだ値は加工しない．
+\cid{C05}\code{sklearn.model\_selection.train\_test\_split} を，乱数のシード 0，テストデータの割合 20\% で使用し，テストデータ以外の行を訓練データとする．
+
+\paragraph{当てはめ，予測，評価}
+\cid{C06}訓練データの説明変数 \NFeatures{} 個すべてと目的変数に，\code{LinearRegression.fit} を既定のパラメータで適用する．
+\cid{C07}当てはめたモデルと説明変数に \code{LinearRegression.predict} を適用して，予測値を求める．
+\cid{C08}テストデータの目的変数と予測値に \code{sklearn.metrics.mean\_squared\_error} を適用した値を，MSE とする．
+
+\paragraph{計算環境とリポジトリの版}
+\cid{C09}GitHub Actions の標準の runner（ubuntu-24.04，x86\_64，\CpuCount{} コア，メモリ \MemoryGib{} GiB）で実行する．
+\cid{C10}実験は，リポジトリ\footnote{\url{https://github.com/auto-res2/formal-first-diabetes-regression-4}}の commit \code{\RepositoryCommit} を取り出して実行する．実験コード，ライブラリの版を固定するファイル，Python の版を含む実行のコマンドは，すべてこの commit にある．
+
+\section{結果}
+\label{sec:result}
+
+実験は \NFullRuns{} 回だけ実行した．出力された MSE は \TestMse\val{outputTestMse} であった．
+\cid{C01}この値は 3400 を下回らないので，主張は偽である．この判定は値の比較だけで決まり，公理に依存しない．
+\cid{C00}したがって，あわせた主張も偽である．偽になったのは MSE が 3400 を下回らなかったためで，信頼性条件は次節のとおり満たされた．
+
+\section{信頼性条件}
+\label{sec:reliability}
+
+\cid{R01}信頼性条件は，下の 3 つの公理，宣言と観測の一致，HARKing をしていないこと，チェリーピッキングをしていないことからなる．検証の結果，すべて成り立った．この判定は，3 つの公理に依存する．
+
+\paragraph{宣言と観測の一致}
+\cid{R05}すべての宣言について，宣言した値は，GitHub の検証器が観測した値と一致し，その宣言のほかの検証も成り立った．
+\cid{R06}データセット（URL，ファイルの SHA-256，件数，列）は，宣言と一致した．\cid{R07}宣言した URL から取得したファイルの SHA-256 も，宣言と一致した．\cid{R08}したがって，下の公理のもとで，実行が読んだファイルは Efron らのデータセットである．
+\cid{R09}読み込みの関数と引数は，宣言と一致した．
+\cid{R10}分割の関数と引数は，宣言と一致した．\cid{R11}訓練データ \NTrain{} 件\val{observedTrainIndex}とテストデータ \NTest{} 件\val{observedTestIndex}は重ならず，合わせると全 \NSamples{} 件になる．
+\cid{R12}当てはめの関数，パラメータ，説明変数の数は，宣言と一致した．\cid{R13}当てはめに渡したデータは，読み込んだファイルの訓練データの行そのものである．
+\cid{R14}予測の関数は，宣言と一致した．\cid{R15}予測に渡した説明変数は，読み込んだファイルのテストデータの行そのものである．
+\cid{R16}MSE の計算の関数は，宣言と一致した．\cid{R17}渡した目的変数は，読み込んだファイルのテストデータの行そのものである．\cid{R18}渡した予測値は，予測の関数が返した値そのものである．
+\cid{R19}計算環境（runner の種類，アーキテクチャ，コア数，メモリ）は，宣言と一致した．
+\cid{R20}実行が取り出したリポジトリの commit は，宣言と一致した．
+
+\paragraph{公理}
+次の 3 つは，検証器が無いため，正しいものとして置いた．
+\cid{R02}Efron らが用いた糖尿病データセットは，配布元の URL から取得したファイルである．
+\cid{R03}実験コードは，仕様を満たす．すなわち，使ったものと計算した MSE をそのまま出力に記録し，宣言のとおりにデータを関数へ渡す．
+\cid{R04}ライブラリは信用できる．すなわち，宣言のとおりに使えば，ライブラリが計算する MSE は，宣言したとおりに計算した MSE である．関数が何を計算するかは主張しない．
+
+宣言と観測の一致は，出力に記録された値についての検証である．記録が実際の実行を表すことは，実験コードの公理による．
+
+\paragraph{研究公正}
+\cid{R21}本番の実行は，失敗したものも含めて，すべて，判定に使った宣言と同じ宣言の commit から起動した．宣言は，実験の後に書き換えていない．
+\cid{R22}成功した本番の実行は \NFullRuns{} 回\val{fullRunTestMses}で，出力された MSE は，判定に使った値と一致する．
+
+\begin{thebibliography}{9}
+\small
+\bibitem{efron} B. Efron, T. Hastie, I. Johnstone, R. Tibshirani: Least angle regression, Annals of Statistics, 32(2), 407--499, 2004.
+\end{thebibliography}
+
+\end{document}
